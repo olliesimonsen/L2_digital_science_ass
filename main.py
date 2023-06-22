@@ -1,6 +1,7 @@
 import os
 import pygame
 
+
 # main window
 pygame.init()
 res = (900, 500)
@@ -13,13 +14,19 @@ FPS = 60
 
 # button class
 class button:
-    def __init__(self, height, width):
-
+    def __init__(self, name, width, height):
+        
+        self.name = name
         self.width = width
         self.height = height
 
-b1 = button(100,100)
-print(b1.height, b1.width)
+    def make_button(self):
+        pass
+        
+
+play_button = button("play_button", 100, 200)
+
+
 
 def main_menu_run():
     clock = pygame.time.Clock()
