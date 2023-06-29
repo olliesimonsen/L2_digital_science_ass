@@ -1,4 +1,4 @@
-"""an educational game"""
+"""An educational game"""
 import pygame
 
 # pylint: disable=no-member, W0123
@@ -6,7 +6,7 @@ import pygame
 
 # main window
 pygame.init()
-win_height, win_width = 500, 900
+win_height, win_width = 1080, 1920
 res = (win_width, win_height)
 window = pygame.display.set_mode((res))
 pygame.display.set_caption("Stellar Solver")
@@ -46,11 +46,13 @@ class Button:
 baseplate = Button(0, 0, win_width, win_height, BLACK, "")
 
 # all the buttons on the main menu
-play_button = Button(390, 100, 120, 50, WHITE, "gameplay_main()")
+play_button = Button(win_width/2 - 60, 100, 120, 50, WHITE, "gameplay_main()")
 highscore_button = Button(
-    390, 175,  120, 50, WHITE, "highscore_main_draw()")
-controls_button = Button(390, 250, 120, 50, WHITE, "controls_main_draw()")
-main_menu_ex_cordit_button = Button(390, 325,  120, 50, WHITE, "pygame.quit()")
+    win_width/2 - 60, 175,  120, 50, WHITE, "highscore_main_draw()")
+controls_button = Button(win_width/2 - 60, 250, 120,
+                         50, WHITE, "controls_main_draw()")
+main_menu_ex_cordit_button = Button(
+    win_width/2 - 60, 325,  120, 50, WHITE, "sys.exit()")
 
 menu_rect_list = [baseplate, play_button, highscore_button,
                   controls_button, main_menu_ex_cordit_button]
@@ -86,6 +88,44 @@ gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 5)
 gp_char_list = [gp_character]
 
 
+class Enemy:
+    """ Eneemy class to create enemies for the player to interact with"""
+
+    def __init__(self, x_cord, y_cord, width, height, colour, value, activated, speed):
+
+        self.x_cord = x_cord
+        self.y_cord = y_cord
+        self.width = width
+        self.height = height
+        self.colour = colour
+        self.value = value
+        self.activated = activated
+        self.speed = speed
+
+    def make_enemy(self):
+        """makes a new enemy"""
+        enemy_hitbox = pygame.Rect(
+            self.x_cord, self.y_cord, self.width, self.height)
+        return enemy_hitbox
+
+
+gp_enemy_list = []
+
+
+class Bullets:
+    """Bullets for both enemies and the player to shoot."""
+
+    def __init__(self, x_cord, y_cord, width, height, colour, team, speed):
+
+        self.x_cord = x_cord
+        self.y_cord = y_cord
+        self.width = width
+        self.height = height
+        self.colour = colour
+        self.team = team
+        self.speed = speed
+
+
 class Text:
     """makes new text boxes through the Text class"""
 
@@ -105,13 +145,14 @@ class Text:
 
 
 # all the text on the main menu
-title_text = Text(230, 0, "", 100, WHITE, "Stellar Solver")
-play_button_text = Text(390, 110, "ariel", 30, BLACK, "Play Game")
+title_text = Text(win_width/2 - 225, 0, "", 100, WHITE, "Stellar Solver")
+play_button_text = Text(win_width/2 - 60, 110, "ariel", 30, BLACK, "Play Game")
 highscore_button_text = Text(
-    390, 175, "ariel", 30, BLACK, "Highscores")
-controls_button_text = Text(390, 250, "ariel", 30, BLACK, "Controls")
+    win_width/2 - 60, 175, "ariel", 30, BLACK, "Highscores")
+controls_button_text = Text(win_width/2 - 60, 250,
+                            "ariel", 30, BLACK, "Controls")
 main_menu_exit_text = Text(
-    390, 325, "ariel", 30, BLACK, "Exit")
+    win_width/2 - 60, 325, "ariel", 30, BLACK, "Exit")
 
 menu_text_list = [title_text, play_button_text,
                   highscore_button_text, controls_button_text, main_menu_exit_text]
@@ -123,6 +164,7 @@ gameplay_text_list = [gameplay_back_menu_text]
 
 def main_menu_run():
     """Updates and runs the main menu"""
+
     clock = pygame.time.Clock()
     run = True
     while run:
@@ -140,17 +182,15 @@ def main_menu_run():
                 for rect in menu_rect_list:
                     if rect.x_cord + rect.width > x_cord > rect.x_cord and\
                             rect.y_cord + rect.height > y_cord > rect.y_cord:
-                        run = False
                         try:
                             eval(rect.func)
                         except SyntaxError:
                             pass
 
-        menu_char_list = []
-        draw(menu_rect_list, menu_text_list, menu_char_list)
+        draw(menu_rect_list, menu_text_list, [], [])
 
 
-def draw(rect_list, text_list, char_list):
+def draw(rect_list, text_list, char_list, enemy_list):
     """draws all items in the inputted lists"""
     # rendering buttons themselves
     for rect in rect_list:
@@ -166,11 +206,17 @@ def draw(rect_list, text_list, char_list):
     for char in char_list:
         pygame.draw.rect(window, char.colour, char.make_player())
 
+    # drawing all enemies
+    for enemy in enemy_list:
+        pygame.draw.rect(window, enemy.colour, enemy.make_enemy())
+
     pygame.display.update()
 
 
 def gameplay_main():
     """the handling center the gameplay features"""
+    time = 0
+
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
     run = True
@@ -180,7 +226,6 @@ def gameplay_main():
         # Allowing the program to stop more cleanly
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
                 pygame.quit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -188,17 +233,26 @@ def gameplay_main():
                 for rect in gameplay_rect_list:
                     if rect.x_cord + rect.width > x_cord > rect.x_cord and\
                             rect.y_cord + rect.height > y_cord > rect.y_cord:
-                        run = False
                         try:
                             eval(rect.func)
                         except SyntaxError:
                             pass
+        # creating 5 enemies every 3 seconds
+        if time >= 180:
+            time = 0
+
+            for i in range(5):
+                enemy = Enemy(win_width - 50, (100 + ((win_height-50) /
+                              5) * i), 50, 50, RED, 0, False, 10)
+                gp_enemy_list.append(enemy)
+
         keys_pressed = pygame.key.get_pressed()
-        gameplay_movement(gp_char_list, keys_pressed)
-        draw(gameplay_rect_list, gameplay_text_list, gp_char_list)
+        gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed)
+        draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list)
+        time += 1
 
 
-def gameplay_movement(char_list, keys_pressed):
+def gameplay_movement(char_list, enemy_list, keys_pressed):
     """handleing movemnt of objects in gameplay"""
     for char in char_list:
         if keys_pressed[pygame.K_a] \
@@ -213,6 +267,12 @@ def gameplay_movement(char_list, keys_pressed):
         if keys_pressed[pygame.K_s] \
                 and char.y_cord + char.speed + char.height < win_height - 15:  # down
             char.y_cord += char.speed
+    for enemy in enemy_list:
+        enemy.x_cord -= enemy.speed
+
+
+def collision_decttion():
+    """handles the collisions between players, bullets and enemies"""
 
 
 def highscore_main_draw():
