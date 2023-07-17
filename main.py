@@ -3,6 +3,8 @@ import pygame
 
 # pylint: disable=no-member, W0123
 
+# global variables
+
 
 # main window
 pygame.init()
@@ -11,8 +13,11 @@ res = (win_width, win_height)
 window = pygame.display.set_mode((res))
 pygame.display.set_caption("Stellar Solver")
 
-# Constant Variables
+# Constant Variables.
 FPS = 60
+
+# Changing variables.
+LIVES = 3
 
 
 # RGB colour values
@@ -20,6 +25,12 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+
+# added events
+PLAYER_HIT = pygame.USEREVENT + 1
+
+# making event last for 500ms
+
 
 # makes new button rectangles using the Button class
 
@@ -58,7 +69,7 @@ menu_rect_list = [baseplate, play_button, highscore_button,
                   controls_button, main_menu_ex_cordit_button]
 
 # all the button in the gameplay window
-gameplay_back_menu = Button(0, 0,  120, 50, WHITE, "main_menu_run()")
+gameplay_back_menu = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
 
 gameplay_rect_list = [baseplate, gameplay_back_menu]
 
@@ -157,9 +168,11 @@ main_menu_exit_text = Text(
 menu_text_list = [title_text, play_button_text,
                   highscore_button_text, controls_button_text, main_menu_exit_text]
 
-gameplay_back_menu_text = Text(0, 0, "ariel", 30, BLACK, "Main Menu")
+# all the text on the main menu
+gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
+gameplay_lives_text = Text(1700, 0, "ariel", 50, WHITE, "Lives: 3")
 
-gameplay_text_list = [gameplay_back_menu_text]
+gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text]
 
 
 def main_menu_run():
@@ -216,6 +229,7 @@ def draw(rect_list, text_list, char_list, enemy_list):
 def gameplay_main():
     """the handling center the gameplay features"""
     time = 0
+    cooldown = 0
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -237,6 +251,12 @@ def gameplay_main():
                             eval(rect.func)
                         except SyntaxError:
                             pass
+
+            if event.type == PLAYER_HIT and cooldown <= 0:
+                gameplay_lives_text.char = "Lives: " + str(gp_character.lives - 1)
+                gp_character.lives = gp_character.lives - 1
+                cooldown = FPS
+
         # creating 5 enemies every 3 seconds
         if time >= 180:
             time = 0
@@ -248,8 +268,10 @@ def gameplay_main():
 
         keys_pressed = pygame.key.get_pressed()
         gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed)
+        collision_decttion(gp_char_list, gp_enemy_list)
         draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list)
         time += 1
+        cooldown -= 1
 
 
 def gameplay_movement(char_list, enemy_list, keys_pressed):
@@ -271,9 +293,13 @@ def gameplay_movement(char_list, enemy_list, keys_pressed):
         enemy.x_cord -= enemy.speed
 
 
-def collision_decttion():
+def collision_decttion(char_list, enemy_list):
     """handles the collisions between players, bullets and enemies"""
-
+    for char in char_list:
+        for enemy in enemy_list:
+            if char.x_cord > enemy.x_cord and char.x_cord < (enemy.x_cord + enemy.width)\
+                or (char.x_cord + char.width) > enemy.x_cord and (char.x_cord + char.width) < (enemy.x_cord + enemy.width):
+                    pygame.event.post(pygame.event.Event(PLAYER_HIT))
 
 def highscore_main_draw():
     """Handles showing highscore when the button is clicked from main menu."""
