@@ -14,7 +14,7 @@ window = pygame.display.set_mode((res))
 pygame.display.set_caption("Stellar Solver")
 
 # Constant Variables.
-FPS = 60
+FPS = 1
 
 # Changing variables.
 LIVES = 3
@@ -25,6 +25,8 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
 
 # added events
 PLAYER_HIT = pygame.USEREVENT + 1
@@ -136,6 +138,11 @@ class Bullets:
         self.team = team
         self.speed = speed
 
+    def make_bullet(self):
+        """makes a new bullet"""
+        bullet_hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.height)
+
+gp_bullet_list = []
 
 class Text:
     """makes new text boxes through the Text class"""
@@ -237,11 +244,14 @@ def gameplay_main():
     while run:
         clock.tick(FPS)
 
+        keys_pressed = pygame.key.get_pressed()
+
         # Allowing the program to stop more cleanly
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
+            # checking where the mouse has clicked and if a button is present
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x_cord, y_cord = pygame.mouse.get_pos()
                 for rect in gameplay_rect_list:
@@ -251,14 +261,18 @@ def gameplay_main():
                             eval(rect.func)
                         except SyntaxError:
                             pass
+            if keys_pressed[pygame.K_SPACE]:
+                for char in gp_char_list:
+                    friend_bullet = Bullets(char.x_cord, char.y_cord + char.height/2, 40, 20, BLUE, 1, 20)
+                    gp_bullet_list.append(friend_bullet)
 
             if event.type == PLAYER_HIT and cooldown <= 0:
-                gameplay_lives_text.char = "Lives: " + str(gp_character.lives - 1)
                 gp_character.lives = gp_character.lives - 1
-                cooldown = FPS
+                gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
+                cooldown = 1 * FPS
 
-        # creating 5 enemies every 3 seconds
-        if time >= 180:
+        # Creating 5 enemies every 3 seconds.
+        if time >= 3 * FPS:
             time = 0
 
             for i in range(5):
@@ -266,7 +280,7 @@ def gameplay_main():
                               5) * i), 50, 50, RED, 0, False, 10)
                 gp_enemy_list.append(enemy)
 
-        keys_pressed = pygame.key.get_pressed()
+        # Running other essential functions for the gameplay to function.
         gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed)
         collision_decttion(gp_char_list, gp_enemy_list)
         draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list)
@@ -297,9 +311,15 @@ def collision_decttion(char_list, enemy_list):
     """handles the collisions between players, bullets and enemies"""
     for char in char_list:
         for enemy in enemy_list:
-            if char.x_cord > enemy.x_cord and char.x_cord < (enemy.x_cord + enemy.width)\
-                or (char.x_cord + char.width) > enemy.x_cord and (char.x_cord + char.width) < (enemy.x_cord + enemy.width):
+            # detects if any charatcer is inside any enemy
+            if char.y_cord < (enemy.y_cord + enemy.height) \
+                and (char.y_cord + char.height) > enemy.y_cord:
+                if char.x_cord > enemy.x_cord \
+                    and char.x_cord < (enemy.x_cord + enemy.width) \
+                    or (char.x_cord + char.width) > enemy.x_cord \
+                    and (char.x_cord + char.width) < (enemy.x_cord + enemy.width):
                     pygame.event.post(pygame.event.Event(PLAYER_HIT))
+                    return enemy_list.remove(enemy)
 
 def highscore_main_draw():
     """Handles showing highscore when the button is clicked from main menu."""
