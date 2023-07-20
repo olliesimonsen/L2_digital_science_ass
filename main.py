@@ -14,7 +14,7 @@ window = pygame.display.set_mode((res))
 pygame.display.set_caption("Stellar Solver")
 
 # Constant Variables.
-FPS = 1
+FPS = 60
 
 # Changing variables.
 LIVES = 3
@@ -119,7 +119,13 @@ class Enemy:
         """makes a new enemy"""
         enemy_hitbox = pygame.Rect(
             self.x_cord, self.y_cord, self.width, self.height)
+
         return enemy_hitbox
+
+    def make_enemy_answer(self):
+        """makes enemies text answers"""
+        enemy_text = pygame.font.SysFont("ariel", 50)
+        return enemy_text
 
 
 gp_enemy_list = []
@@ -141,6 +147,7 @@ class Bullets:
     def make_bullet(self):
         """makes a new bullet"""
         bullet_hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.height)
+        return bullet_hitbox
 
 gp_bullet_list = []
 
@@ -178,8 +185,9 @@ menu_text_list = [title_text, play_button_text,
 # all the text on the main menu
 gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
 gameplay_lives_text = Text(1700, 0, "ariel", 50, WHITE, "Lives: 3")
+gameplay_question_text = Text(700, 0, "ariel", 50, WHITE, "Question: " )
 
-gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text]
+gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text, gameplay_question_text]
 
 
 def main_menu_run():
@@ -207,10 +215,10 @@ def main_menu_run():
                         except SyntaxError:
                             pass
 
-        draw(menu_rect_list, menu_text_list, [], [])
+        draw(menu_rect_list, menu_text_list, [], [], [])
 
 
-def draw(rect_list, text_list, char_list, enemy_list):
+def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     """draws all items in the inputted lists"""
     # rendering buttons themselves
     for rect in rect_list:
@@ -229,6 +237,13 @@ def draw(rect_list, text_list, char_list, enemy_list):
     # drawing all enemies
     for enemy in enemy_list:
         pygame.draw.rect(window, enemy.colour, enemy.make_enemy())
+        enemy_text = enemy.make_enemy_answer()
+        button_text = enemy_text.render(str(enemy.value), True, WHITE)
+        window.blit(button_text, (enemy.x_cord, enemy.y_cord))
+
+    # drawing all enemies
+    for bullet in bullet_list:
+        pygame.draw.rect(window, bullet.colour, bullet.make_bullet())
 
     pygame.display.update()
 
@@ -261,9 +276,11 @@ def gameplay_main():
                             eval(rect.func)
                         except SyntaxError:
                             pass
+
             if keys_pressed[pygame.K_SPACE]:
                 for char in gp_char_list:
-                    friend_bullet = Bullets(char.x_cord, char.y_cord + char.height/2, 40, 20, BLUE, 1, 20)
+                    friend_bullet = Bullets(
+                        char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
 
             if event.type == PLAYER_HIT and cooldown <= 0:
@@ -277,18 +294,18 @@ def gameplay_main():
 
             for i in range(5):
                 enemy = Enemy(win_width - 50, (100 + ((win_height-50) /
-                              5) * i), 50, 50, RED, 0, False, 10)
+                              5) * i), 50, 50, RED, 10, False, 10)
                 gp_enemy_list.append(enemy)
 
         # Running other essential functions for the gameplay to function.
-        gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed)
-        collision_decttion(gp_char_list, gp_enemy_list)
-        draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list)
+        gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
+        collision_decttion(gp_char_list, gp_enemy_list, gp_bullet_list)
+        draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list, gp_bullet_list)
         time += 1
         cooldown -= 1
 
 
-def gameplay_movement(char_list, enemy_list, keys_pressed):
+def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
     """handleing movemnt of objects in gameplay"""
     for char in char_list:
         if keys_pressed[pygame.K_a] \
@@ -303,11 +320,18 @@ def gameplay_movement(char_list, enemy_list, keys_pressed):
         if keys_pressed[pygame.K_s] \
                 and char.y_cord + char.speed + char.height < win_height - 15:  # down
             char.y_cord += char.speed
+
     for enemy in enemy_list:
         enemy.x_cord -= enemy.speed
+        if enemy.x_cord < 0 - enemy.width:
+            return enemy_list.remove(enemy)
 
+    for bullet in bullet_list:
+        bullet.x_cord += bullet.speed
+        if bullet.x_cord > win_width:
+            return bullet_list.remove(bullet)
 
-def collision_decttion(char_list, enemy_list):
+def collision_decttion(char_list, enemy_list, bullet_list):
     """handles the collisions between players, bullets and enemies"""
     for char in char_list:
         for enemy in enemy_list:
@@ -318,17 +342,18 @@ def collision_decttion(char_list, enemy_list):
                     and char.x_cord < (enemy.x_cord + enemy.width) \
                     or (char.x_cord + char.width) > enemy.x_cord \
                     and (char.x_cord + char.width) < (enemy.x_cord + enemy.width):
+
                     pygame.event.post(pygame.event.Event(PLAYER_HIT))
                     return enemy_list.remove(enemy)
 
-def highscore_main_draw():
-    """Handles showing highscore when the button is clicked from main menu."""
-    print("highscore")
+            # detects if any bullets is hits any enemy
+            for bullet in bullet_list:
+                if (bullet.x_cord + bullet.width) > enemy.x_cord:
+                    if bullet.y_cord > enemy.y_cord \
+                        and bullet.y_cord < (enemy.y_cord + enemy.height) \
+                        or (bullet.y_cord + bullet.height) > enemy.y_cord \
+                        and (bullet.y_cord + bullet.height) < (enemy.y_cord + enemy.height):
 
-
-def controls_main_draw():
-    """Draws a help image for users when button is clicked."""
-    print("controls")
-
+                        return enemy_list.remove(enemy), bullet_list.remove(bullet)
 
 main_menu_run()
