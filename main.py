@@ -1,5 +1,6 @@
 """An educational game"""
 import pygame
+import random
 
 # pylint: disable=no-member, W0123
 
@@ -30,6 +31,7 @@ GREEN = (0, 255, 0)
 
 # added events
 PLAYER_HIT = pygame.USEREVENT + 1
+ENEMY_HIT = pygame.USEREVENT + 2
 
 # making event last for 500ms
 
@@ -283,6 +285,12 @@ def gameplay_main():
                         char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
 
+            if event.type == ENEMY_HIT:
+                question = 1
+                gameplay_question_text.char = "Question: " + question
+
+                
+
             if event.type == PLAYER_HIT and cooldown <= 0:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
@@ -353,7 +361,8 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                         and bullet.y_cord < (enemy.y_cord + enemy.height) \
                         or (bullet.y_cord + bullet.height) > enemy.y_cord \
                         and (bullet.y_cord + bullet.height) < (enemy.y_cord + enemy.height):
-
+                        
+                        pygame.event.post(pygame.event.Event(ENEMY_HIT))
                         return enemy_list.remove(enemy), bullet_list.remove(bullet)
 
 main_menu_run()
