@@ -81,7 +81,7 @@ gameplay_rect_list = [baseplate, gameplay_back_menu]
 class Character:
     """character class for the character the user will play as"""
 
-    def __init__(self, x_cord, y_cord, width, height, colour, lives, speed):
+    def __init__(self, x_cord, y_cord, width, height, colour, lives, speed, answer):
 
         self.x_cord = x_cord
         self.y_cord = y_cord
@@ -90,6 +90,7 @@ class Character:
         self.colour = colour
         self.lives = lives
         self.speed = speed
+        self.answer = answer
 
     def make_player(self):
         """makes the players hitbox"""
@@ -98,7 +99,7 @@ class Character:
 
 
 # the gameplay character
-gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 5)
+gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 10, 0)
 
 gp_char_list = [gp_character]
 
@@ -279,17 +280,11 @@ def gameplay_main():
                         except SyntaxError:
                             pass
 
-            if keys_pressed[pygame.K_SPACE]:
+            if keys_pressed[pygame.K_SPACE]: # need cooldown
                 for char in gp_char_list:
                     friend_bullet = Bullets(
                         char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
-
-            if event.type == ENEMY_HIT:
-                question = 1
-                gameplay_question_text.char = "Question: " + question
-
-                
 
             if event.type == PLAYER_HIT and cooldown <= 0:
                 gp_character.lives = gp_character.lives - 1
@@ -297,13 +292,9 @@ def gameplay_main():
                 cooldown = 1 * FPS
 
         # Creating 5 enemies every 3 seconds.
-        if time >= 3 * FPS:
+        if time >= 3.5 * FPS:
             time = 0
-
-            for i in range(5):
-                enemy = Enemy(win_width - 50, (100 + ((win_height-50) /
-                              5) * i), 50, 50, RED, 10, False, 10)
-                gp_enemy_list.append(enemy)
+            create_enemies()
 
         # Running other essential functions for the gameplay to function.
         gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
@@ -311,6 +302,45 @@ def gameplay_main():
         draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list, gp_bullet_list)
         time += 1
         cooldown -= 1
+
+def create_enemies():
+    """changes the question when asners are correct or inncorrect"""
+    for enemy in gp_enemy_list:
+        enemy.value = None
+
+    rand_int_1 = random.randint(1, 12)
+    rand_int_2 = random.randint(1, 12)
+
+
+    rand_correct_answer = random.randint(0, 4)
+
+    duplicate_answer_check = []
+
+    for i in range(5):
+        rand_int_1 = random.randint(1, 12)
+        rand_int_2 = random.randint(1, 12)
+        value = rand_int_1 * rand_int_2
+            
+        for answer in duplicate_answer_check:
+            if answer == value:
+                rand_int_1 = random.randint(1, 12)
+                rand_int_2 = random.randint(1, 12)
+                value = rand_int_1 * rand_int_2
+            else:
+                break
+            
+        duplicate_answer_check.append(value)
+
+        if rand_correct_answer == i:
+            question = str(rand_int_1) + " X " + str(rand_int_2)
+            gameplay_question_text.char = "Question: " + str(question)
+            gp_character.answer = value
+
+        enemy = Enemy(win_width - 50, (100 + ((win_height-50) /
+                        5) * i), 100, 100, RED, value, False, 10)
+        gp_enemy_list.append(enemy)
+
+
 
 
 def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
@@ -362,7 +392,15 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                         or (bullet.y_cord + bullet.height) > enemy.y_cord \
                         and (bullet.y_cord + bullet.height) < (enemy.y_cord + enemy.height):
                         
-                        pygame.event.post(pygame.event.Event(ENEMY_HIT))
-                        return enemy_list.remove(enemy), bullet_list.remove(bullet)
+                        print(str(enemy.value) + "|" + str(gp_character.answer))
+                        if enemy.value == gp_character.answer:
+                            enemy.x_cord = 0 -enemy.width
+                            gameplay_question_text.char = "Correct!"
+                        
+                        else:
+                            pygame.event.post(pygame.event.Event(PLAYER_HIT))
+                            enemy.x_cord = 0 - enemy.width
+                            gameplay_question_text.char = gameplay_question_text.char + " Incorrect"
+                        return enemy_list.remove(enemy), bullet_list.clear()
 
 main_menu_run()
