@@ -99,7 +99,7 @@ class Character:
 
 
 # the gameplay character
-gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 10, 0)
+gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 13, 0)
 
 gp_char_list = [gp_character]
 
@@ -127,7 +127,7 @@ class Enemy:
 
     def make_enemy_answer(self):
         """makes enemies text answers"""
-        enemy_text = pygame.font.SysFont("ariel", 50)
+        enemy_text = pygame.font.SysFont("ariel", 100)
         return enemy_text
 
 
@@ -255,6 +255,7 @@ def gameplay_main():
     """the handling center the gameplay features"""
     time = 0
     cooldown = 0
+    bullet_reload = 0
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -280,7 +281,8 @@ def gameplay_main():
                         except SyntaxError:
                             pass
 
-            if keys_pressed[pygame.K_SPACE]: # need cooldown
+            if keys_pressed[pygame.K_SPACE] and bullet_reload <= 0:
+                bullet_reload = 0.7 * FPS
                 for char in gp_char_list:
                     friend_bullet = Bullets(
                         char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
@@ -289,12 +291,18 @@ def gameplay_main():
             if event.type == PLAYER_HIT and cooldown <= 0:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
-                cooldown = 1 * FPS
+                if gp_character.lives <= 0:
+                    bullet_reload = 9 * 10**17
+                    loser_text = Text(win_width/2 - 225, win_height/2 - 50, "", 100, WHITE, "You Lost :DDDD")
+                    gameplay_text_list.append(loser_text)
+
+                cooldown = FPS
 
         # Creating 5 enemies every 3 seconds.
-        if time >= 3.5 * FPS:
+        enemy_speed = 7
+        if time >= (18.9558 * (0.753947)**enemy_speed + 2.375) * FPS:
             time = 0
-            create_enemies()
+            create_enemies(enemy_speed)
 
         # Running other essential functions for the gameplay to function.
         gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
@@ -302,8 +310,9 @@ def gameplay_main():
         draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list, gp_bullet_list)
         time += 1
         cooldown -= 1
+        bullet_reload -= 1
 
-def create_enemies():
+def create_enemies(enemy_speed):
     """changes the question when asners are correct or inncorrect"""
     for enemy in gp_enemy_list:
         enemy.value = None
@@ -320,16 +329,14 @@ def create_enemies():
         rand_int_1 = random.randint(1, 12)
         rand_int_2 = random.randint(1, 12)
         value = rand_int_1 * rand_int_2
-            
-        for answer in duplicate_answer_check:
-            if answer == value:
+        while True:
+            if value not in duplicate_answer_check:
+                duplicate_answer_check.append(value)
+                break
+            else:
                 rand_int_1 = random.randint(1, 12)
                 rand_int_2 = random.randint(1, 12)
                 value = rand_int_1 * rand_int_2
-            else:
-                break
-            
-        duplicate_answer_check.append(value)
 
         if rand_correct_answer == i:
             question = str(rand_int_1) + " X " + str(rand_int_2)
@@ -337,7 +344,7 @@ def create_enemies():
             gp_character.answer = value
 
         enemy = Enemy(win_width - 50, (100 + ((win_height-50) /
-                        5) * i), 100, 100, RED, value, False, 10)
+                        5) * i), 150, 150, RED, value, False, enemy_speed)
         gp_enemy_list.append(enemy)
 
 
