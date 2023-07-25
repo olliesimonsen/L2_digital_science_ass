@@ -1,6 +1,6 @@
 """An educational game"""
-import pygame
 import random
+import pygame
 
 # pylint: disable=no-member, W0123
 
@@ -63,9 +63,9 @@ baseplate = Button(0, 0, win_width, win_height, BLACK, "")
 # all the buttons on the main menu
 play_button = Button(win_width/2 - 60, 100, 120, 50, WHITE, "gameplay_main()")
 highscore_button = Button(
-    win_width/2 - 60, 175,  120, 50, WHITE, "highscore_main_draw()")
+    win_width/2 - 60, 175,  120, 50, WHITE, "")
 controls_button = Button(win_width/2 - 60, 250, 120,
-                         50, WHITE, "controls_main_draw()")
+                         50, WHITE, "")
 main_menu_ex_cordit_button = Button(
     win_width/2 - 60, 325,  120, 50, WHITE, "sys.exit()")
 
@@ -81,7 +81,7 @@ gameplay_rect_list = [baseplate, gameplay_back_menu]
 class Character:
     """character class for the character the user will play as"""
 
-    def __init__(self, x_cord, y_cord, width, height, colour, lives, speed, answer):
+    def __init__(self, x_cord, y_cord, width, height, colour, lives, speed, answer, score):
 
         self.x_cord = x_cord
         self.y_cord = y_cord
@@ -91,6 +91,7 @@ class Character:
         self.lives = lives
         self.speed = speed
         self.answer = answer
+        self.score = score
 
     def make_player(self):
         """makes the players hitbox"""
@@ -99,7 +100,7 @@ class Character:
 
 
 # the gameplay character
-gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 13, 0)
+gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 13, 0, 0)
 
 gp_char_list = [gp_character]
 
@@ -188,14 +189,15 @@ menu_text_list = [title_text, play_button_text,
 # all the text on the main menu
 gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
 gameplay_lives_text = Text(1700, 0, "ariel", 50, WHITE, "Lives: 3")
-gameplay_question_text = Text(700, 0, "ariel", 50, WHITE, "Question: " )
+gameplay_question_text = Text(400, 0, "ariel", 100, WHITE, "Question: " )
+gameplay_score_text = Text(1400, 0, "ariel", 50, WHITE, "Score: 0")
 
-gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text, gameplay_question_text]
+gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text,
+                       gameplay_question_text, gameplay_score_text]
 
 
 def main_menu_run():
     """Updates and runs the main menu"""
-
     clock = pygame.time.Clock()
     run = True
     while run:
@@ -227,12 +229,6 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     for rect in rect_list:
         pygame.draw.rect(window, rect.colour, rect.make_button())
 
-    # rendering text for the buttons
-    for text in text_list:
-        button_text = text.make_text().render(
-            text.char, True, text.colour)
-        window.blit(button_text, (text.x_cord, text.y_cord))
-
     # displaying all characters
     for char in char_list:
         pygame.draw.rect(window, char.colour, char.make_player())
@@ -248,14 +244,22 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     for bullet in bullet_list:
         pygame.draw.rect(window, bullet.colour, bullet.make_bullet())
 
+    # rendering all text items
+    for text in text_list:
+        button_text = text.make_text().render(
+            text.char, True, text.colour)
+        window.blit(button_text, (text.x_cord, text.y_cord))
     pygame.display.update()
 
 
 def gameplay_main():
     """the handling center the gameplay features"""
-    time = 0
+    enemy_speed = 7
+    time = (18.9558 * (0.753947)**enemy_speed + 2.375) * FPS - 3 * FPS
     cooldown = 0
     bullet_reload = 0
+    score_update = FPS
+    spawn_enemies = True
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -280,7 +284,8 @@ def gameplay_main():
                             eval(rect.func)
                         except SyntaxError:
                             pass
-
+            
+            # Creating a Bullet when the spacebar is pressed.
             if keys_pressed[pygame.K_SPACE] and bullet_reload <= 0:
                 bullet_reload = 0.7 * FPS
                 for char in gp_char_list:
@@ -288,21 +293,29 @@ def gameplay_main():
                         char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
 
+            # Stopping all processes when the player loses.
             if event.type == PLAYER_HIT and cooldown <= 0:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
                 if gp_character.lives <= 0:
                     bullet_reload = 9 * 10**17
-                    loser_text = Text(win_width/2 - 225, win_height/2 - 50, "", 100, WHITE, "You Lost :DDDD")
+                    score_update = 9 * 10**17
+                    loser_text = Text(win_width/2 - 225, win_height/2 - 50, "", 100, WHITE,
+                                       "You Lost your score is: " + str(gp_character.score))
                     gameplay_text_list.append(loser_text)
+                    gp_character.speed = 0
+                    spawn_enemies = False
 
                 cooldown = FPS
 
         # Creating 5 enemies every 3 seconds.
-        enemy_speed = 7
-        if time >= (18.9558 * (0.753947)**enemy_speed + 2.375) * FPS:
+        if time >= (18.9558 * (0.753947)**enemy_speed + 2.375) * FPS and spawn_enemies:
             time = 0
             create_enemies(enemy_speed)
+        if score_update <= 0:
+            score_update = FPS
+            gp_character.score += 1
+            gameplay_score_text.char = "Score: " + str(gp_character.score)
 
         # Running other essential functions for the gameplay to function.
         gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
@@ -311,6 +324,7 @@ def gameplay_main():
         time += 1
         cooldown -= 1
         bullet_reload -= 1
+        score_update -= 1
 
 def create_enemies(enemy_speed):
     """changes the question when asners are correct or inncorrect"""
