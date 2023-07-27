@@ -33,7 +33,9 @@ GREEN = (0, 255, 0)
 PLAYER_HIT = pygame.USEREVENT + 1
 ENEMY_HIT = pygame.USEREVENT + 2
 
-# making event last for 500ms
+# defining an image to be used in the game
+imp = pygame.image.load(
+    "Disc_Controls_Screen.png").convert()
 
 
 # makes new button rectangles using the Button class
@@ -65,12 +67,16 @@ play_button = Button(win_width/2 - 60, 100, 120, 50, WHITE, "gameplay_main()")
 highscore_button = Button(
     win_width/2 - 60, 175,  120, 50, WHITE, "")
 controls_button = Button(win_width/2 - 60, 250, 120,
-                         50, WHITE, "")
+                         50, WHITE, "control_main()")
 main_menu_ex_cordit_button = Button(
     win_width/2 - 60, 325,  120, 50, WHITE, "sys.exit()")
 
 menu_rect_list = [baseplate, play_button, highscore_button,
                   controls_button, main_menu_ex_cordit_button]
+# All the buttons in the contorl window.
+control_back_button = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
+
+control_rect_list = [control_back_button]
 
 # all the button in the gameplay window
 gameplay_back_menu = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
@@ -185,6 +191,10 @@ main_menu_exit_text = Text(
 
 menu_text_list = [title_text, play_button_text,
                   highscore_button_text, controls_button_text, main_menu_exit_text]
+# All the text in the contorl window.
+control_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
+
+control_text_list = [control_back_text]
 
 # all the text on the main menu
 gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
@@ -194,34 +204,6 @@ gameplay_score_text = Text(1400, 0, "ariel", 50, WHITE, "Score: 0")
 
 gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text,
                        gameplay_question_text, gameplay_score_text]
-
-
-def main_menu_run():
-    """Updates and runs the main menu"""
-    clock = pygame.time.Clock()
-    run = True
-    while run:
-        clock.tick(FPS)
-
-        # Allowing the program to stop more cleanly
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-                pygame.quit()
-
-            # checking for mouse clicks to activate buttons
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                x_cord, y_cord = pygame.mouse.get_pos()
-                for rect in menu_rect_list:
-                    if rect.x_cord + rect.width > x_cord > rect.x_cord and\
-                            rect.y_cord + rect.height > y_cord > rect.y_cord:
-                        try:
-                            eval(rect.func)
-                        except SyntaxError:
-                            pass
-
-        draw(menu_rect_list, menu_text_list, [], [], [])
-
 
 def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     """draws all items in the inputted lists"""
@@ -250,6 +232,62 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
             text.char, True, text.colour)
         window.blit(button_text, (text.x_cord, text.y_cord))
     pygame.display.update()
+
+def main_menu_run():
+    """Updates and runs the main menu"""
+    clock = pygame.time.Clock()
+    run = True
+    while run:
+        clock.tick(FPS)
+
+        # Allowing the program to stop more cleanly
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+
+            # checking for mouse clicks to activate buttons
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x_cord, y_cord = pygame.mouse.get_pos()
+                for rect in menu_rect_list:
+                    if rect.x_cord + rect.width > x_cord > rect.x_cord and\
+                            rect.y_cord + rect.height > y_cord > rect.y_cord:
+                        try:
+                            eval(rect.func)
+                        except SyntaxError:
+                            pass
+
+        draw(menu_rect_list, menu_text_list, [], [], [])
+
+def control_main():
+    """helps the user earn the game"""
+
+    draw([baseplate], [], [], [], [])
+    window.blit(imp, (450,100))
+    pygame.display.update()
+
+    clock = pygame.time.Clock()
+    run = True
+    while run:
+        clock.tick(FPS)
+
+        # Allowing the program to stop more cleanly
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+                    # checking for mouse clicks to activate buttons
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x_cord, y_cord = pygame.mouse.get_pos()
+                for rect in control_rect_list:
+                    if rect.x_cord + rect.width > x_cord > rect.x_cord and\
+                            rect.y_cord + rect.height > y_cord > rect.y_cord:
+                        try:
+                            eval(rect.func)
+                        except SyntaxError:
+                            pass
+
+        draw(control_rect_list, control_text_list, [], [], [])
 
 
 def gameplay_main():
@@ -413,7 +451,6 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                         or (bullet.y_cord + bullet.height) > enemy.y_cord \
                         and (bullet.y_cord + bullet.height) < (enemy.y_cord + enemy.height):
                         
-                        print(str(enemy.value) + "|" + str(gp_character.answer))
                         if enemy.value == gp_character.answer:
                             enemy.x_cord = 0 -enemy.width
                             gameplay_question_text.char = "Correct!"
