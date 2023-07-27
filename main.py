@@ -289,6 +289,11 @@ def control_main():
 
         draw(control_rect_list, control_text_list, [], [], [])
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 4851e152fbc470ad6a0b5953d1e7fd01bcedb698
 
 def gameplay_main():
     """the handling center the gameplay features"""
