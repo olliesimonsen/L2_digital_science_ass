@@ -1,5 +1,6 @@
 """An educational game"""
 import random
+import re
 import pygame
 
 # pylint: disable=no-member, W0123
@@ -38,6 +39,7 @@ imp = pygame.image.load(
     "Disc_Controls_Screen.png").convert()
 
 
+
 # makes new button rectangles using the Button class
 
 
@@ -65,7 +67,7 @@ baseplate = Button(0, 0, win_width, win_height, BLACK, "")
 # all the buttons on the main menu
 play_button = Button(win_width/2 - 60, 100, 120, 50, WHITE, "gameplay_main()")
 highscore_button = Button(
-    win_width/2 - 60, 175,  120, 50, WHITE, "")
+    win_width/2 - 60, 175,  120, 50, WHITE, "highscore_main()")
 controls_button = Button(win_width/2 - 60, 250, 120,
                          50, WHITE, "control_main()")
 main_menu_ex_cordit_button = Button(
@@ -73,10 +75,15 @@ main_menu_ex_cordit_button = Button(
 
 menu_rect_list = [baseplate, play_button, highscore_button,
                   controls_button, main_menu_ex_cordit_button]
-# All the buttons in the contorl window.
+# All the buttons in the control window.
 control_back_button = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
 
-control_rect_list = [control_back_button]
+control_rect_list = [control_back_button] # DO NOT PUT BASEPLATE IN HERE
+
+# All the buttons in the highscore window.
+highscore_back_button = Button(0, 0, 200, 50, WHITE, "main_menu_run()")
+
+highscore_rect_list = [baseplate, highscore_back_button]
 
 # all the button in the gameplay window
 gameplay_back_menu = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
@@ -196,6 +203,11 @@ control_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
 
 control_text_list = [control_back_text]
 
+# All the text in the highscore window.
+highscore_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
+
+highscore_text_list = [highscore_back_text]
+
 # all the text on the main menu
 gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
 gameplay_lives_text = Text(1700, 0, "ariel", 50, WHITE, "Lives: 3")
@@ -253,6 +265,7 @@ def main_menu_run():
                     if rect.x_cord + rect.width > x_cord > rect.x_cord and\
                             rect.y_cord + rect.height > y_cord > rect.y_cord:
                         try:
+                            print(highscore_list)
                             eval(rect.func)
                         except SyntaxError:
                             pass
@@ -260,9 +273,9 @@ def main_menu_run():
         draw(menu_rect_list, menu_text_list, [], [], [])
 
 def control_main():
-    """helps the user earn the game"""
-
+    """helps the user learn the game"""
     draw([baseplate], [], [], [], [])
+
     window.blit(imp, (450,100))
     pygame.display.update()
 
@@ -276,7 +289,7 @@ def control_main():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
-                    # checking for mouse clicks to activate buttons
+            # checking for mouse clicks to activate buttons
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x_cord, y_cord = pygame.mouse.get_pos()
                 for rect in control_rect_list:
@@ -290,7 +303,37 @@ def control_main():
         draw(control_rect_list, control_text_list, [], [], [])
 
 
+def highscore_main():
+    """shows the users the current best scores"""
+    clock = pygame.time.Clock()
+    run = True
+    while run:
+        clock.tick(FPS)
 
+        # Allowing the program to stop more cleanly
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+            # checking for mouse clicks to activate buttons
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x_cord, y_cord = pygame.mouse.get_pos()
+                for rect in highscore_rect_list:
+                    if rect.x_cord + rect.width > x_cord > rect.x_cord and\
+                            rect.y_cord + rect.height > y_cord > rect.y_cord:
+                        try:
+                            eval(rect.func)
+                        except SyntaxError:
+                            pass
+
+        font_size = 50
+        i = 0
+        for item in highscore_list:
+            highscore = Text(win_width/2 - 100, i*font_size, "ariel", font_size, WHITE, str(item))
+            highscore_text_list.append(highscore)
+            i += 1
+
+        draw(highscore_rect_list, highscore_text_list, [], [], [])
 
 def gameplay_main():
     """the handling center the gameplay features"""
@@ -333,18 +376,17 @@ def gameplay_main():
                         char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
 
-            # Stopping all processes when the player loses.
+            # Making player lose a life when nessercary.
             if event.type == PLAYER_HIT and cooldown <= 0:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
+                # Stopping all processes when the player loses.
                 if gp_character.lives <= 0:
-                    bullet_reload = 9 * 10**17
-                    score_update = 9 * 10**17
                     loser_text = Text(win_width/2 - 225, win_height/2 - 50, "", 100, WHITE,
                                        "You Lost your score is: " + str(gp_character.score))
                     gameplay_text_list.append(loser_text)
-                    gp_character.speed = 0
-                    spawn_enemies = False
+                    run_highscore_input()
+                    highscore_main()
 
                 cooldown = FPS
 
@@ -365,6 +407,49 @@ def gameplay_main():
         cooldown -= 1
         bullet_reload -= 1
         score_update -= 1
+
+def run_highscore_input():
+    """Records the users highscore name"""
+    text = ""
+    input_box = Button(400, 200, 500, 150, WHITE, "")
+    gameplay_rect_list.append(input_box)
+    input_text = Text(400, 200, "ariel", 50, BLACK, text)
+    gameplay_text_list.append(input_text)
+
+    # Timer making the game run 60 times each second.
+    clock = pygame.time.Clock()
+    run = True
+    while run:
+        clock.tick(FPS)
+
+        # Allowing the program to stop more cleanly
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    # Adding the players score to the highscore database.
+                    highscore_info = str(input_text.char + " " + str(gp_character.score))
+                    highscore_list.append(highscore_info)
+                    print(highscore_list)
+                    for item in highscore_list:
+                        item = item + "\n"
+                    with open ("Highscore.txt", "w", encoding="utf-8") as highscore:
+                        # need a way to rank scores
+                        highscore.writelines(highscore_list)
+                    return highscore_list
+
+                elif event.key == pygame.K_BACKSPACE:
+                    text = text[:-1]
+                    input_text.char = text
+                else:
+                    text += event.unicode
+                    input_text.char = text
+                
+
+        draw(gameplay_rect_list, gameplay_text_list, gp_char_list, [], [])
+
 
 def create_enemies(enemy_speed):
     """changes the question when asners are correct or inncorrect"""
@@ -462,5 +547,14 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                             enemy.x_cord = 0 - enemy.width
                             gameplay_question_text.char = gameplay_question_text.char + " Incorrect"
                         return enemy_list.remove(enemy), bullet_list.clear()
+if __name__ == '__main__':
+    # grabbing highscores
+    highscore_list = []
+    with open("Highscore.txt", "r", encoding="utf-8") as highscores:
+        highscore_list = highscores.readlines()
 
-main_menu_run()
+        fixing_list = []
+        for line in highscore_list:
+            fixing_list.append(re.sub('\n', '', line))
+        highscore_list = fixing_list
+    main_menu_run()
