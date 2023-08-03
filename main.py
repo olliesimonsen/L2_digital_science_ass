@@ -35,10 +35,11 @@ PLAYER_HIT = pygame.USEREVENT + 1
 ENEMY_HIT = pygame.USEREVENT + 2
 
 # defining an image to be used in the game
-imp = pygame.image.load(
+control_image = pygame.image.load(
     "Disc_Controls_Screen.png").convert()
 
-
+spaceship = pygame.image.load("spaceship_red.PNG").convert()
+spaceship = pygame.transform.scale(spaceship, (50, 50))
 
 # makes new button rectangles using the Button class
 
@@ -86,9 +87,11 @@ highscore_back_button = Button(0, 0, 200, 50, WHITE, "main_menu_run()")
 highscore_rect_list = [baseplate, highscore_back_button]
 
 # all the button in the gameplay window
-gameplay_back_menu = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
+gameplay_back_menu = Button(0, 0,  200, 70, WHITE, "main_menu_run()")
 
-gameplay_rect_list = [baseplate, gameplay_back_menu]
+gameplay_header_rect = Button(210, 0, win_width - 210, 70, WHITE, "")
+
+gameplay_rect_list = [gameplay_back_menu, gameplay_header_rect]
 
 
 class Character:
@@ -210,9 +213,9 @@ highscore_text_list = [highscore_back_text]
 
 # all the text on the main menu
 gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
-gameplay_lives_text = Text(1700, 0, "ariel", 50, WHITE, "Lives: 3")
-gameplay_question_text = Text(400, 0, "ariel", 100, WHITE, "Question: " )
-gameplay_score_text = Text(1400, 0, "ariel", 50, WHITE, "Score: 0")
+gameplay_lives_text = Text(1700, 0, "ariel", 50, BLACK, "Lives: 3")
+gameplay_question_text = Text(400, 0, "ariel", 100, BLACK, "Question: " )
+gameplay_score_text = Text(1400, 0, "ariel", 50, BLACK, "Score: 0")
 
 gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text,
                        gameplay_question_text, gameplay_score_text]
@@ -224,8 +227,8 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
         pygame.draw.rect(window, rect.colour, rect.make_button())
 
     # displaying all characters
-    for char in char_list:
-        pygame.draw.rect(window, char.colour, char.make_player())
+    #for char in char_list:
+    #    pygame.draw.rect(window, char.colour, char.make_player())
 
     # drawing all enemies
     for enemy in enemy_list:
@@ -276,7 +279,7 @@ def control_main():
     """helps the user learn the game"""
     draw([baseplate], [], [], [], [])
 
-    window.blit(imp, (450,100))
+    window.blit(control_image, (450,100))
     pygame.display.update()
 
     clock = pygame.time.Clock()
@@ -305,6 +308,7 @@ def control_main():
 
 def highscore_main():
     """shows the users the current best scores"""
+    highscore_text_list.clear()
     clock = pygame.time.Clock()
     run = True
     while run:
@@ -332,9 +336,7 @@ def highscore_main():
             highscore = Text(win_width/2 - 100, i*font_size, "ariel", font_size, WHITE, str(item))
             highscore_text_list.append(highscore)
             i += 1
-
-        draw(highscore_rect_list, highscore_text_list, [], [], [])
-
+        highscore_text_list.append(highscore_back_text)
         draw(highscore_rect_list, highscore_text_list, [], [], [])
 
 def gameplay_main():
@@ -345,6 +347,8 @@ def gameplay_main():
     bullet_reload = 0
     score_update = FPS
     spawn_enemies = True
+
+    
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -375,7 +379,7 @@ def gameplay_main():
                 bullet_reload = 0.7 * FPS
                 for char in gp_char_list:
                     friend_bullet = Bullets(
-                        char.x_cord, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
+                        char.x_cord + char.width, char.y_cord + char.height/2 - 10, 40, 20, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
 
             # Making player lose a life when nessercary.
@@ -410,6 +414,9 @@ def gameplay_main():
         bullet_reload -= 1
         score_update -= 1
 
+        window.blit(spaceship, (gp_character.x_cord, gp_character.y_cord))
+        pygame.display.update()
+
 def run_highscore_input():
     """Records the users highscore name"""
     text = ""
@@ -434,13 +441,31 @@ def run_highscore_input():
                     # Adding the players score to the highscore database.
                     highscore_info = str(input_text.char + " " + str(gp_character.score))
                     highscore_list.append(highscore_info)
-                    print(highscore_list)
+                    score_dict = {
+
+                    }
                     for item in highscore_list:
-                        item = item + "\n"
-                    with open ("G:\\My Drive\\L2 Digital Science 2023\\L2_digital_science_ass\\Highscore.txt", "w", encoding="utf-8") as highscore:
+                        score = ""
+                        for char in item:
+                            if char.isdigit():
+                                score = score + char
+                                print(score)
+
+                        score_dict[item] = int(score)
+                    
+                    sorted_score_dict = sorted(score_dict.items(), key=lambda x:x[1], reverse=True)
+
+                    highscore_list.clear()
+
+                    for item in sorted_score_dict:
+                        highscore_list.append(item[0])
+
+                    with open ("Highscore.txt", "w", encoding="utf-8") as highscore:
                         # need a way to rank scores
                         for item in highscore_list:
-                            highscore.write(item)
+                            highscore.write(str(item))
+                            highscore.write("\n")
+                        highscore.flush()
                     return highscore_list
 
                 elif event.key == pygame.K_BACKSPACE:
@@ -502,7 +527,7 @@ def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
                 and char.x_cord + char.speed + char.width < win_width:  # right
             char.x_cord += char.speed
         if keys_pressed[pygame.K_w] \
-                and char.y_cord - char.speed > 50:  # up
+                and char.y_cord - char.speed > 70:  # up
             char.y_cord -= char.speed
         if keys_pressed[pygame.K_s] \
                 and char.y_cord + char.speed + char.height < win_height - 15:  # down
@@ -553,7 +578,7 @@ def collision_decttion(char_list, enemy_list, bullet_list):
 if __name__ == '__main__':
     # grabbing highscores
     highscore_list = []
-    with open("G:\\My Drive\\L2 Digital Science 2023\\L2_digital_science_ass\\Highscore.txt", "r", encoding="utf-8") as highscores:
+    with open("Highscore.txt", "r", encoding="utf-8") as highscores:
         highscore_list = highscores.readlines()
 
         fixing_list = []
