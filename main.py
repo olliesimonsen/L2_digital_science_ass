@@ -2,6 +2,7 @@
 import random
 import re
 import pygame
+import sys
 
 # pylint: disable=no-member, W0123
 
@@ -25,9 +26,9 @@ LIVES = 3
 # RGB colour values
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (255, 0, 0)
+RED = (183, 83, 75)
 YELLOW = (255, 255, 0)
-BLUE = (0, 0, 255)
+BLUE = (93, 135, 194)
 GREEN = (0, 255, 0)
 
 # added events
@@ -213,10 +214,10 @@ highscore_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
 highscore_text_list = [highscore_back_text]
 
 # all the text on the main menu
-gameplay_back_menu_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
-gameplay_lives_text = Text(1700, 0, "ariel", 50, BLACK, "Lives: 3")
-gameplay_question_text = Text(400, 0, "ariel", 100, BLACK, "Question: " )
-gameplay_score_text = Text(1400, 0, "ariel", 50, BLACK, "Score: 0")
+gameplay_back_menu_text = Text(5, 15, "ariel", 50, BLACK, "Main Menu")
+gameplay_lives_text = Text(1700, 0, "ariel", 75, BLACK, "Lives: 3")
+gameplay_question_text = Text(400, 0, "ariel", 100, BLACK, "Question: ")
+gameplay_score_text = Text(1400, 0, "ariel", 75, BLACK, "Score: 0")
 
 gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text,
                        gameplay_question_text, gameplay_score_text]
@@ -259,8 +260,7 @@ def main_menu_run():
         # Allowing the program to stop more cleanly
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
-                pygame.quit()
+                sys.exit()
 
             # checking for mouse clicks to activate buttons
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -269,7 +269,6 @@ def main_menu_run():
                     if rect.x_cord + rect.width > x_cord > rect.x_cord and\
                             rect.y_cord + rect.height > y_cord > rect.y_cord:
                         try:
-                            print(highscore_list)
                             eval(rect.func)
                         except SyntaxError:
                             pass
@@ -343,10 +342,9 @@ def highscore_main():
 def gameplay_main():
     """the handling center the gameplay features"""
     enemy_speed = 7
-    time = (18.9558 * (0.753947)**enemy_speed + 2.375) * FPS - 3 * FPS
+    time = ((18.9558 * (0.753947)**enemy_speed + 2.375) - 3) * FPS
     cooldown = 0
     bullet_reload = 0
-    score_update = FPS
     spawn_enemies = True
 
     # Timer making the game run 60 times each second.
@@ -387,9 +385,6 @@ def gameplay_main():
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
                 # Stopping all processes when the player loses.
                 if gp_character.lives <= 0:
-                    loser_text = Text(win_width/2 - 225, win_height/2 - 50, "", 100, WHITE,
-                                       "You Lost your score is: " + str(gp_character.score))
-                    gameplay_text_list.append(loser_text)
                     run_highscore_input()
                     highscore_main()
 
@@ -413,9 +408,14 @@ def gameplay_main():
 def run_highscore_input():
     """Records the users highscore name"""
     text = ""
-    input_box = Button(400, 200, 500, 150, WHITE, "")
+    loser_text = Text(win_width/2 - 300, win_height/2 - 200, "", 100, WHITE,
+                    "You Lost your score is: " + str(gp_character.score))
+    gameplay_text_list.append(loser_text)
+    input_help_text = Text(win_width/2 - 250, win_height/2 - 125, "", 60, WHITE, "Enter your name here")
+    gameplay_text_list.append(input_help_text)
+    input_box = Button(win_width/2 - 250, win_height/2 - 75, 500, 150, WHITE, "")
     gameplay_rect_list.append(input_box)
-    input_text = Text(400, 200, "ariel", 50, BLACK, text)
+    input_text = Text(win_width/2 - 250, win_height/2 - 75, "ariel", 50, BLACK, text)
     gameplay_text_list.append(input_text)
 
     # Timer making the game run 60 times each second.
@@ -442,7 +442,6 @@ def run_highscore_input():
                         for char in item:
                             if char.isdigit():
                                 score = score + char
-                                print(score)
 
                         score_dict[item] = int(score)
                     
