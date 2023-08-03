@@ -335,6 +335,8 @@ def highscore_main():
 
         draw(highscore_rect_list, highscore_text_list, [], [], [])
 
+        draw(highscore_rect_list, highscore_text_list, [], [], [])
+
 def gameplay_main():
     """the handling center the gameplay features"""
     enemy_speed = 7
@@ -435,9 +437,10 @@ def run_highscore_input():
                     print(highscore_list)
                     for item in highscore_list:
                         item = item + "\n"
-                    with open ("Highscore.txt", "w", encoding="utf-8") as highscore:
+                    with open ("G:\\My Drive\\L2 Digital Science 2023\\L2_digital_science_ass\\Highscore.txt", "w", encoding="utf-8") as highscore:
                         # need a way to rank scores
-                        highscore.writelines(highscore_list)
+                        for item in highscore_list:
+                            highscore.write(item)
                     return highscore_list
 
                 elif event.key == pygame.K_BACKSPACE:
@@ -550,7 +553,7 @@ def collision_decttion(char_list, enemy_list, bullet_list):
 if __name__ == '__main__':
     # grabbing highscores
     highscore_list = []
-    with open("Highscore.txt", "r", encoding="utf-8") as highscores:
+    with open("G:\\My Drive\\L2 Digital Science 2023\\L2_digital_science_ass\\Highscore.txt", "r", encoding="utf-8") as highscores:
         highscore_list = highscores.readlines()
 
         fixing_list = []
