@@ -36,10 +36,11 @@ ENEMY_HIT = pygame.USEREVENT + 2
 
 # defining an image to be used in the game
 control_image = pygame.image.load(
-    "Disc_Controls_Screen.png").convert()
+    "Controls_Screen.png").convert()
 
 spaceship = pygame.image.load("spaceship_red.PNG").convert()
-spaceship = pygame.transform.scale(spaceship, (50, 50))
+spaceship = pygame.transform.scale(spaceship, (60, 60))
+spaceship = pygame.transform.rotate(spaceship, 90)
 
 # makes new button rectangles using the Button class
 
@@ -91,7 +92,7 @@ gameplay_back_menu = Button(0, 0,  200, 70, WHITE, "main_menu_run()")
 
 gameplay_header_rect = Button(210, 0, win_width - 210, 70, WHITE, "")
 
-gameplay_rect_list = [gameplay_back_menu, gameplay_header_rect]
+gameplay_rect_list = [baseplate, gameplay_back_menu, gameplay_header_rect]
 
 
 class Character:
@@ -190,7 +191,7 @@ class Text:
 
 
 # all the text on the main menu
-title_text = Text(win_width/2 - 225, 0, "", 100, WHITE, "Stellar Solver")
+title_text = Text(450, 0, "", 100, WHITE, "Math Devout, Figuring It Out")
 play_button_text = Text(win_width/2 - 60, 110, "ariel", 30, BLACK, "Play Game")
 highscore_button_text = Text(
     win_width/2 - 60, 175, "ariel", 30, BLACK, "Highscores")
@@ -227,8 +228,8 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
         pygame.draw.rect(window, rect.colour, rect.make_button())
 
     # displaying all characters
-    #for char in char_list:
-    #    pygame.draw.rect(window, char.colour, char.make_player())
+    for char in char_list:
+        window.blit(spaceship, (char.x_cord, char.y_cord))
 
     # drawing all enemies
     for enemy in enemy_list:
@@ -279,7 +280,7 @@ def control_main():
     """helps the user learn the game"""
     draw([baseplate], [], [], [], [])
 
-    window.blit(control_image, (450,100))
+    window.blit(control_image, (250, 0))
     pygame.display.update()
 
     clock = pygame.time.Clock()
@@ -348,8 +349,6 @@ def gameplay_main():
     score_update = FPS
     spawn_enemies = True
 
-    
-
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
     run = True
@@ -400,10 +399,6 @@ def gameplay_main():
         if time >= (18.9558 * (0.753947)**enemy_speed + 2.375) * FPS and spawn_enemies:
             time = 0
             create_enemies(enemy_speed)
-        if score_update <= 0:
-            score_update = FPS
-            gp_character.score += 1
-            gameplay_score_text.char = "Score: " + str(gp_character.score)
 
         # Running other essential functions for the gameplay to function.
         gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
@@ -412,10 +407,8 @@ def gameplay_main():
         time += 1
         cooldown -= 1
         bullet_reload -= 1
-        score_update -= 1
 
-        window.blit(spaceship, (gp_character.x_cord, gp_character.y_cord))
-        pygame.display.update()
+        
 
 def run_highscore_input():
     """Records the users highscore name"""
@@ -567,8 +560,10 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                         and (bullet.y_cord + bullet.height) < (enemy.y_cord + enemy.height):
                         
                         if enemy.value == gp_character.answer:
-                            enemy.x_cord = 0 -enemy.width
+                            enemy.x_cord = 0 - enemy.width
                             gameplay_question_text.char = "Correct!"
+                            gp_character.score += 1
+                            gameplay_score_text.char = "Score: " + str(gp_character.score)
                         
                         else:
                             pygame.event.post(pygame.event.Event(PLAYER_HIT))

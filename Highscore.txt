@@ -1,18 +1,1 @@
-Mic 128
-Kian 57
-help 19
-near 8
-ahh 8
-a aaaaaa 8
-Hey 7
-starlight 7
-bagpipe 7
-po 7
-live 6
-long 6
-noise 6
-Jump 6
-death 6
-wa 5
-inside 5
-JAM 5
+Mic 158
