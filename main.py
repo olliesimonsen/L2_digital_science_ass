@@ -76,17 +76,17 @@ help_button = Button(win_width/2 - button_width/2, 500, button_width,
                          button_height, WHITE, "help_main()")
 
 main_menu_ex_cordit_button = Button(
-    win_width/2 - button_width/2, 650,  button_width, button_height, WHITE, "sys.exit()")
+    win_width/2 - button_width/2, 650,  button_width, button_height, WHITE, "close_program()")
 
 menu_rect_list = [baseplate, play_button, highscore_button,
                   help_button, main_menu_ex_cordit_button]
 # All the button and rectangles in the control window.
-control_back_button = Button(0, 0,  200, 50, WHITE, "main_menu_run()")
+help_back_button = Button(0, 0,  300, 100, WHITE, "main_menu_run()")
 
-control_rect_list = [control_back_button] #! DO NOT PUT BASEPLATE IN HERE!!!
+help_rect_list = [help_back_button] #! DO NOT PUT BASEPLATE IN HERE!!!
 
 # All the button and rectangles in the highscore window.
-highscore_back_button = Button(0, 0, 200, 50, WHITE, "main_menu_run()")
+highscore_back_button = Button(0, 0, 300, 100, WHITE, "main_menu_run()")
 
 highscore_rect_list = [baseplate, highscore_back_button]
 
@@ -211,20 +211,20 @@ main_menu_exit_text = Text(
 menu_text_list = [title_text, play_button_text,
                   highscore_button_text, help_button_text, main_menu_exit_text]
 # All the text in the help window represented as the 'Text' class.
-help_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
+help_back_text = Text(5, 20, "ariel", 75, BLACK, "Main Menu")
 
-control_text_list = [help_back_text]
+help_text_list = [help_back_text]
 
 # All the text in the highscore window represented as the 'Text' class.
-highscore_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
+highscore_back_text = Text(5, 20, "ariel", 75, BLACK, "Main Menu")
 
 highscore_text_list = [highscore_back_text]
 
 # All the text on the main menu represented as the 'Text' class.
 gameplay_pause_text = Text(5, 15, "ariel", 50, BLACK, "Pause")
-gameplay_lives_text = Text(1700, 0, "ariel", 75, BLACK, "Lives: 3")
 gameplay_question_text = Text(400, 0, "ariel", 100, BLACK, "Question: ")
 gameplay_score_text = Text(1400, 0, "ariel", 75, BLACK, "Score: 0")
+gameplay_lives_text = Text(1700, 0, "ariel", 75, BLACK, "Lives: 3")
 
 gameplay_text_list = [gameplay_pause_text, gameplay_lives_text,
                        gameplay_question_text, gameplay_score_text]
@@ -313,14 +313,14 @@ def help_main():
             # Checking for mouse clicks to activate buttons.
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x_cord, y_cord = pygame.mouse.get_pos()
-                for rect in control_rect_list:
+                for rect in help_rect_list:
                     if rect.x_cord + rect.width > x_cord > rect.x_cord and\
                             rect.y_cord + rect.height > y_cord > rect.y_cord:
                         try:
                             eval(rect.func)
                         except SyntaxError:
                             pass
-        draw(control_rect_list, control_text_list, [], [], [])
+        draw(help_rect_list, help_text_list, [], [], [])
 
 
 def highscore_main():
@@ -346,7 +346,7 @@ def highscore_main():
                             eval(rect.func)
                         except SyntaxError:
                             pass
-        
+
         # Generating the text objects for each highscore item.
         font_size = 50
         i = 0
@@ -428,7 +428,7 @@ def gameplay_main():
                     gp_bullet_list.append(friend_bullet)
 
             # Making player lose a life when nessercary.
-            if event.type == PLAYER_HIT and cooldown <= 0:
+            if event.type == PLAYER_HIT and cooldown <= 0 or keys_pressed[pygame.K_BACKSLASH]:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
                 # Stopping all processes when the player loses.
@@ -466,13 +466,20 @@ def run_highscore_input():
     loser_text = Text(win_width/2 - 300, win_height/2 - 200, "", 100, WHITE,
                     "You Lost, your score is: " + str(gp_character.score))
     gameplay_text_list.append(loser_text)
-    input_help_text = Text(
-        win_width/2 - 250, win_height/2 - 125, "", 40, WHITE, "Enter your name here, Name must not be no longer than 10 characters")
+    input_help_text = Text(win_width/2 - 250, win_height/2 - 125, "", 40, WHITE,
+                            "Enter your name here to be displayed as a highscore")
     gameplay_text_list.append(input_help_text)
     input_box = Button(win_width/2 - 250, win_height/2 - 75, 500, 150, WHITE, "")
     gameplay_rect_list.append(input_box)
-    input_text = Text(win_width/2 - 250, win_height/2 - 75, "ariel", 50, BLACK, text)
+    input_text = Text(win_width/2 - 250, win_height/2 - 75, "ariel", 60, BLACK, text)
     gameplay_text_list.append(input_text)
+    length_text_error = Text(win_width/2 - 275, win_height/2 + 150, "", 50, WHITE,
+                            "Name must be at most 10 characters long")
+    gameplay_text_list.append(length_text_error)
+    digit_text_error = Text(win_width/2 - 275, win_height/2 + 100, "", 50, WHITE,
+                            "Name cannot contain numbers")
+    gameplay_text_list.append(digit_text_error)
+
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -525,17 +532,19 @@ def run_highscore_input():
                 elif event.key == pygame.K_BACKSPACE:
                     text = text[:-1]
                     input_text.char = text
-                # stopping numbers being inputted
-                elif event.key == pygame.K_0 or event.key ==pygame.K_1 \
-                    or event.key == pygame.K_2 or event.key == pygame.K_3 \
-                    or event.key == pygame.K_4 or event.key == pygame.K_5 \
-                    or event.key == pygame.K_6 or event.key == pygame.K_7 or \
-                    event.key == pygame.K_8 or event.key == pygame.K_9:
-                    pass
                 # Every other character is inputted as text.
                 else:
-                    text += event.unicode
-                    input_text.char = text
+                    # Stopping numbers being inputted.
+                    temp_text = event.unicode
+                    if temp_text.isdigit():
+                        pass
+                    # Stopping more than 10 characters being inputted.
+                    elif len(text) == 10:
+                        pass
+                    # All other text is added to the input box
+                    else:
+                        text += event.unicode
+                        input_text.char = text
 
 
         draw(gameplay_rect_list, gameplay_text_list, gp_char_list, [], [])
@@ -582,28 +591,36 @@ def create_enemies(enemy_speed):
 
 
 def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
-    """handleing movemnt of objects in gameplay"""
+    """Handleing movemnt of objects in gameplay."""
     for char in char_list:
+        # Moves the player left if the "a" key is pressed.
         if keys_pressed[pygame.K_a] \
                 and char.x_cord - char.speed > 0:  # left
             char.x_cord -= char.speed
+        # Moves the player right if the "d" key is pressed.
         if keys_pressed[pygame.K_d] \
                 and char.x_cord + char.speed + char.width < win_width:  # right
             char.x_cord += char.speed
+        # Moves the player up if the "w" key is pressed.
         if keys_pressed[pygame.K_w] \
                 and char.y_cord - char.speed > 70:  # up
             char.y_cord -= char.speed
+        # Moves the player down if the "s" key is pressed.
         if keys_pressed[pygame.K_s] \
                 and char.y_cord + char.speed + char.height < win_height - 15:  # down
             char.y_cord += char.speed
 
+    # Moving each enemy by their speed each frame.
     for enemy in enemy_list:
         enemy.x_cord -= enemy.speed
+        # If on the edge of the screen it deletes the enemy.
         if enemy.x_cord < 0 - enemy.width:
             return enemy_list.remove(enemy)
 
+    # Moving each bullet by their speed each frame.
     for bullet in bullet_list:
         bullet.x_cord += bullet.speed
+        # If a bullet hits the edge of the screen it is deleted.
         if bullet.x_cord > win_width:
             return bullet_list.remove(bullet)
 
@@ -611,7 +628,7 @@ def collision_decttion(char_list, enemy_list, bullet_list):
     """handles the collisions between players, bullets and enemies"""
     for char in char_list:
         for enemy in enemy_list:
-            # detects if any charatcer is inside any enemy
+            # Detects if any character is inside any enemy.
             if char.y_cord < (enemy.y_cord + enemy.height) \
                 and (char.y_cord + char.height) > enemy.y_cord:
                 if char.x_cord > enemy.x_cord \
@@ -622,7 +639,7 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                     pygame.event.post(pygame.event.Event(PLAYER_HIT))
                     return enemy_list.remove(enemy)
 
-            # detects if any bullets is hits any enemy
+            # Detects if any bullets is hits any enemy.
             for bullet in bullet_list:
                 if (bullet.x_cord + bullet.width) > enemy.x_cord:
                     if bullet.y_cord > enemy.y_cord \
@@ -630,26 +647,31 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                         or (bullet.y_cord + bullet.height) > enemy.y_cord \
                         and (bullet.y_cord + bullet.height) < (enemy.y_cord + enemy.height):
 
+                        # Checking if the enemy hit has the correct answer.
                         if enemy.value == gp_character.answer:
                             enemy.x_cord = 0 - enemy.width
                             gameplay_question_text.char = "Correct!"
                             gp_character.score += 1
-                            gameplay_score_text.char = "Score: " + str(gp_character.score)  
+                            gameplay_score_text.char = "Score: " + str(gp_character.score)
 
+                        # If inncorrect answer is hit the player loses a life.
                         else:
                             pygame.event.post(pygame.event.Event(PLAYER_HIT))
                             enemy.x_cord = 0 - enemy.width
+                            # Checking if the player is invunerable.
                             already_inncorrect = False
                             for char in gameplay_question_text.char:
                                 if char == "I":
                                     already_inncorrect = True
                                     break
-                                else:
-                                    pass
-                            
+
                             if not already_inncorrect:
-                                gameplay_question_text.char = gameplay_question_text.char + " Incorrect"
+                                gameplay_question_text.char += " Incorrect"
                         return enemy_list.remove(enemy), bullet_list.clear()
+
+def close_program():
+    """Closes the program."""
+    sys.exit()
 
 if __name__ == "__main__":
     # Grabbing highscore values for the highscore file.
