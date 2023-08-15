@@ -91,12 +91,17 @@ highscore_back_button = Button(0, 0, 200, 50, WHITE, "main_menu_run()")
 highscore_rect_list = [baseplate, highscore_back_button]
 
 # All the button and rectangles in the gameplay window.
-gameplay_back_menu = Button(0, 0,  200, 70, WHITE, "main_menu_run()")
+gameplay_pause_menu = Button(0, 0,  200, 70, WHITE, "p_true")
 
 gameplay_header_rect = Button(210, 0, win_width - 210, 70, WHITE, "")
 
-gameplay_rect_list = [baseplate, gameplay_back_menu, gameplay_header_rect]
+gameplay_rect_list = [baseplate, gameplay_pause_menu, gameplay_header_rect]
 
+# All the buttons and rectangles in the pause game menu.
+pause_resume_button = Button(
+    win_width/2 - 200, 300, button_width, button_height, WHITE, "p_false")
+
+pause_rect_list = [pause_resume_button]
 
 class Character:
     """Character class for the character the user will play as."""
@@ -188,7 +193,7 @@ class Text:
         self.char = char
 
     def make_text(self):
-        """Creates and returns a fint for a text object."""
+        """Creates and returns a font for a text object."""
         text = pygame.font.SysFont(self.font, self.font_size)
         return text
 
@@ -216,13 +221,19 @@ highscore_back_text = Text(0, 0, "ariel", 50, BLACK, "Main Menu")
 highscore_text_list = [highscore_back_text]
 
 # All the text on the main menu represented as the 'Text' class.
-gameplay_back_menu_text = Text(5, 15, "ariel", 50, BLACK, "Main Menu")
+gameplay_pause_text = Text(5, 15, "ariel", 50, BLACK, "Pause")
 gameplay_lives_text = Text(1700, 0, "ariel", 75, BLACK, "Lives: 3")
 gameplay_question_text = Text(400, 0, "ariel", 100, BLACK, "Question: ")
 gameplay_score_text = Text(1400, 0, "ariel", 75, BLACK, "Score: 0")
 
-gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text,
+gameplay_text_list = [gameplay_pause_text, gameplay_lives_text,
                        gameplay_question_text, gameplay_score_text]
+
+# All the text on the pause game menu represented as the 'Text' class.
+pause_title_text = Text(win_width/2 - 250, 200, "", 100, WHITE, "Game Paused")
+pause_resume_text = Text(win_width/2 -200, 300, "ariel", 50, BLACK, "Resume")
+
+pause_text_list = [pause_title_text, pause_resume_text]
 
 def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     """Draws all items in the inputted lists."""
@@ -335,7 +346,8 @@ def highscore_main():
                             eval(rect.func)
                         except SyntaxError:
                             pass
-
+        
+        # Generating the text objects for each highscore item.
         font_size = 50
         i = 0
         for item in highscore_list:
@@ -347,22 +359,25 @@ def highscore_main():
 
 def gameplay_main():
     """The handling center the gameplay features."""
+    # Resetting the gameplay variables when opened each time.
     enemy_speed = 8
     time = ((18.9558 * (0.753947)**enemy_speed + 2.375) - 3) * FPS
     cooldown = 0
     bullet_reload = 0
+    gp_character.lives = 3
+    gp_character.score = 0
     spawn_enemies = True
+    paused = False
 
-    gameplay_rect_list = [baseplate, gameplay_back_menu, gameplay_header_rect]
+    gameplay_rect_list = [baseplate, gameplay_pause_menu, gameplay_header_rect]
 
-    gameplay_text_list = [gameplay_back_menu_text, gameplay_lives_text,
-                       gameplay_question_text, gameplay_score_text]
+    gameplay_text_list = [gameplay_pause_text, gameplay_lives_text,
+                        gameplay_question_text, gameplay_score_text]
 
     gp_enemy_list.clear()
 
     gameplay_question_text.char = "Question: "
-
-    print("reset")
+    gameplay_lives_text.char = "Lives: "+ str(gp_character.lives)
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -378,15 +393,31 @@ def gameplay_main():
                 pygame.quit()
 
             # Checking where the mouse has clicked and if a button is present.
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and not paused:
                 x_cord, y_cord = pygame.mouse.get_pos()
                 for rect in gameplay_rect_list:
                     if rect.x_cord + rect.width > x_cord > rect.x_cord and\
                             rect.y_cord + rect.height > y_cord > rect.y_cord:
-                        try:
-                            eval(rect.func)
-                        except SyntaxError:
-                            pass
+                        if rect.func == "p_true":
+                            paused = True
+                        else:
+                            try:
+                                eval(rect.func)
+                            except SyntaxError:
+                                pass
+            # Making the resume button get detected.
+            elif event.type == pygame.MOUSEBUTTONDOWN and paused:
+                x_cord, y_cord = pygame.mouse.get_pos()
+                for rect in pause_rect_list:
+                    if rect.x_cord + rect.width > x_cord > rect.x_cord and\
+                            rect.y_cord + rect.height > y_cord > rect.y_cord:
+                        if rect.func == "p_false":
+                            paused = False
+                        else:
+                            try:
+                                eval(rect.func)
+                            except SyntaxError:
+                                pass
 
             # Creating a Bullet when the spacebar is pressed.
             if keys_pressed[pygame.K_SPACE] and bullet_reload <= 0:
@@ -413,13 +444,18 @@ def gameplay_main():
             create_enemies(enemy_speed)
 
         # Running other essential functions for the gameplay to function.
-        gameplay_movement(gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
-        collision_decttion(gp_char_list, gp_enemy_list, gp_bullet_list)
-        draw(gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list, gp_bullet_list)
-        time += 1
-        cooldown -= 1
-        bullet_reload -= 1
-
+        if paused:
+            draw(pause_rect_list, pause_text_list, [], [], [])
+        else:
+            gameplay_movement(
+                gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
+            collision_decttion(
+                gp_char_list, gp_enemy_list, gp_bullet_list)
+            draw(
+                gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list, gp_bullet_list)
+            time += 1
+            cooldown -= 1
+            bullet_reload -= 1
 
 
 def run_highscore_input():
@@ -431,7 +467,7 @@ def run_highscore_input():
                     "You Lost, your score is: " + str(gp_character.score))
     gameplay_text_list.append(loser_text)
     input_help_text = Text(
-        win_width/2 - 250, win_height/2 - 125, "", 60, WHITE, "Enter your name here")
+        win_width/2 - 250, win_height/2 - 125, "", 40, WHITE, "Enter your name here, Name must not be no longer than 10 characters")
     gameplay_text_list.append(input_help_text)
     input_box = Button(win_width/2 - 250, win_height/2 - 75, 500, 150, WHITE, "")
     gameplay_rect_list.append(input_box)
@@ -482,12 +518,20 @@ def run_highscore_input():
                             highscore.write(str(item))
                             highscore.write("\n")
                         highscore.flush()
+                    gameplay_text_list.remove(input_text)
                     return highscore_list
 
                 # If the users hits backspace it removes the last character.
                 elif event.key == pygame.K_BACKSPACE:
                     text = text[:-1]
                     input_text.char = text
+                # stopping numbers being inputted
+                elif event.key == pygame.K_0 or event.key ==pygame.K_1 \
+                    or event.key == pygame.K_2 or event.key == pygame.K_3 \
+                    or event.key == pygame.K_4 or event.key == pygame.K_5 \
+                    or event.key == pygame.K_6 or event.key == pygame.K_7 or \
+                    event.key == pygame.K_8 or event.key == pygame.K_9:
+                    pass
                 # Every other character is inputted as text.
                 else:
                     text += event.unicode
@@ -498,7 +542,7 @@ def run_highscore_input():
 
 
 def create_enemies(enemy_speed):
-    """Changes the question when asners are correct or inncorrect."""
+    """Changes the question when asners are correct or incorrect."""
     for enemy in gp_enemy_list:
         enemy.value = None
 
@@ -534,6 +578,7 @@ def create_enemies(enemy_speed):
         enemy = Enemy(win_width - 50, (100 + ((win_height-50) /
                         5) * i), 150, 150, RED, value, False, enemy_speed)
         gp_enemy_list.append(enemy)
+    return question
 
 
 def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
@@ -589,21 +634,32 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                             enemy.x_cord = 0 - enemy.width
                             gameplay_question_text.char = "Correct!"
                             gp_character.score += 1
-                            gameplay_score_text.char = "Score: " + str(gp_character.score)
+                            gameplay_score_text.char = "Score: " + str(gp_character.score)  
 
                         else:
                             pygame.event.post(pygame.event.Event(PLAYER_HIT))
                             enemy.x_cord = 0 - enemy.width
-                            gameplay_question_text.char = gameplay_question_text.char + " Incorrect"
+                            already_inncorrect = False
+                            for char in gameplay_question_text.char:
+                                if char == "I":
+                                    already_inncorrect = True
+                                    break
+                                else:
+                                    pass
+                            
+                            if not already_inncorrect:
+                                gameplay_question_text.char = gameplay_question_text.char + " Incorrect"
                         return enemy_list.remove(enemy), bullet_list.clear()
-if __name__ == '__main__':
-    # Grabbing highscore values for tyhe highscore file.
+
+if __name__ == "__main__":
+    # Grabbing highscore values for the highscore file.
     highscore_list = []
     with open("Highscore.txt", "r", encoding="utf-8") as highscores:
         highscore_list = highscores.readlines()
 
         fixing_list = []
         for line in highscore_list:
-            fixing_list.append(re.sub('\n', '', line))
+            fixing_list.append(re.sub("\n", "", line))
         highscore_list = fixing_list
+        highscores.flush()
     main_menu_run()
