@@ -30,13 +30,14 @@ ENEMY_HIT = pygame.USEREVENT + 2
 
 # Defining an image to be used in the game.
 control_image = pygame.image.load(
-    "Controls_Screen.png").convert()
+    "updated_controls_screen.png").convert()
 
 spaceship = pygame.image.load("spaceship_red.PNG").convert()
 
 asteroid = pygame.image.load("asteroid.png").convert()
 
 # Altering these images to fit the games dimensions.
+
 spaceship = pygame.transform.scale(spaceship, (60, 60))
 spaceship = pygame.transform.rotate(spaceship, 90)
 
@@ -102,6 +103,15 @@ pause_resume_button = Button(
     win_width/2 - 200, 300, button_width, button_height, WHITE, "p_false")
 
 pause_rect_list = [pause_resume_button]
+
+# All the buttons and rectangles in the exit pop up.
+yes_exit_button = Button(
+    win_width/2 - 300, 300, button_width, button_height, WHITE, "sys.exit(0)")
+
+no_exit_button = Button(
+    win_width/2, 300, button_width, button_height, WHITE, "main_menu_run()")
+
+exit_rect_list = [baseplate, yes_exit_button, no_exit_button]
 
 class Character:
     """Character class for the character the user will play as."""
@@ -235,6 +245,14 @@ pause_resume_text = Text(win_width/2 -200, 300, "ariel", 50, BLACK, "Resume")
 
 pause_text_list = [pause_title_text, pause_resume_text]
 
+# All the text in the exit popup represented as the 'Texst' class.
+exit_question_text = Text(
+    win_width/2 - 400, 200, "", 75, WHITE, "Are you sure Want to exit the program?")
+yes_exit_text = Text(win_width/2 - 300, 300, "ariel", 50, BLACK, "Yes")
+no_exit_text = Text(win_width/2, 300, "ariel", 50, BLACK, "No")
+
+exit_text_list = [exit_question_text, yes_exit_text, no_exit_text]
+
 def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     """Draws all items in the inputted lists."""
     # Rendering the buttons themselves.
@@ -360,7 +378,7 @@ def highscore_main():
 def gameplay_main():
     """The handling center the gameplay features."""
     # Resetting the gameplay variables when opened each time.
-    enemy_speed = 8
+    enemy_speed = 10
     time = ((18.9558 * (0.753947)**enemy_speed + 2.375) - 3) * FPS
     cooldown = 0
     bullet_reload = 0
@@ -377,7 +395,7 @@ def gameplay_main():
     gp_enemy_list.clear()
 
     gameplay_question_text.char = "Question: "
-    gameplay_lives_text.char = "Lives: "+ str(gp_character.lives)
+    gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
 
     # Timer making the game run 60 times each second.
     clock = pygame.time.Clock()
@@ -526,7 +544,12 @@ def run_highscore_input():
                             highscore.write("\n")
                         highscore.flush()
                     gameplay_text_list.remove(input_text)
-                    return highscore_list
+                    gp_character.lives = 3
+                    gp_character.score = 0
+                    gameplay_question_text.char = "Question: "
+                    gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
+                    pygame.display.update()
+                    return highscore_list, gp_character.lives, gp_character.score, gameplay_question_text.char, gameplay_lives_text.char
 
                 # If the users hits backspace it removes the last character.
                 elif event.key == pygame.K_BACKSPACE:
@@ -670,8 +693,30 @@ def collision_decttion(char_list, enemy_list, bullet_list):
                         return enemy_list.remove(enemy), bullet_list.clear()
 
 def close_program():
-    """Closes the program."""
-    sys.exit()
+    """Confims if the program should be closed."""
+    # Timer making the game run 60 times each second.
+    clock = pygame.time.Clock()
+    run = True
+    while run:
+        clock.tick(FPS)
+
+        # Allowing the program to stop more cleanly.
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+            # Checking for mouse clicks to activate buttons.
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x_cord, y_cord = pygame.mouse.get_pos()
+                for rect in exit_rect_list:
+                    if rect.x_cord + rect.width > x_cord > rect.x_cord and\
+                            rect.y_cord + rect.height > y_cord > rect.y_cord:
+                        try:
+                            eval(rect.func)
+                        except SyntaxError:
+                            pass
+
+        draw(exit_rect_list, exit_text_list, [], [], [])
 
 if __name__ == "__main__":
     # Grabbing highscore values for the highscore file.
