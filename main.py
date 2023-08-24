@@ -135,7 +135,7 @@ class Character:
 
 
 # The character used by the user.
-gp_character = Character(200, 100, 50, 50,  YELLOW, 3, 13, 0, 0)
+gp_character = Character(200, win_height/2, 50, 50,  YELLOW, 3, 13, 0, 0)
 
 gp_char_list = [gp_character]
 
@@ -264,7 +264,7 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
     for bullet in bullet_list:
         pygame.draw.rect(window, bullet.colour, bullet.make_bullet())
 
-    # Displaying all characters.
+        # Displaying all characters.
     for char in char_list:
         window.blit(spaceship, (char.x_cord, char.y_cord))
 
@@ -394,6 +394,7 @@ def gameplay_main():
 
     gp_enemy_list.clear()
 
+    gameplay_score_text.char = "Score: 0"
     gameplay_question_text.char = "Question: "
     gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
 
@@ -451,7 +452,11 @@ def gameplay_main():
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
                 # Stopping all processes when the player loses.
                 if gp_character.lives <= 0:
+                    gp_character.x_cord = -100
                     run_highscore_input()
+                    gp_character.x_cord = 200
+                    gp_character.y_cord = win_height/2
+                    run = False
                     highscore_main()
 
                 cooldown = FPS
@@ -474,6 +479,7 @@ def gameplay_main():
             time += 1
             cooldown -= 1
             bullet_reload -= 1
+
 
 
 def run_highscore_input():
@@ -537,19 +543,15 @@ def run_highscore_input():
 
                     # Writing the newly sorted scores to the highscore file.
                     with open ("Highscore.txt", "w", encoding="utf-8") as highscore:
-                        # need a way to rank scores - DONE
 
                         for item in highscore_list:
                             highscore.write(str(item))
                             highscore.write("\n")
                         highscore.flush()
                     gameplay_text_list.remove(input_text)
-                    gp_character.lives = 3
-                    gp_character.score = 0
-                    gameplay_question_text.char = "Question: "
-                    gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
-                    pygame.display.update()
-                    return highscore_list, gp_character.lives, gp_character.score, gameplay_question_text.char, gameplay_lives_text.char
+                    gameplay_text_list.remove(loser_text)
+                    run = False
+                    return highscore_list
 
                 # If the users hits backspace it removes the last character.
                 elif event.key == pygame.K_BACKSPACE:
@@ -618,19 +620,19 @@ def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
     for char in char_list:
         # Moves the player left if the "a" key is pressed.
         if keys_pressed[pygame.K_a] \
-                and char.x_cord - char.speed > 0:  # left
+                and char.x_cord - char.speed > 0:
             char.x_cord -= char.speed
         # Moves the player right if the "d" key is pressed.
         if keys_pressed[pygame.K_d] \
-                and char.x_cord + char.speed + char.width < win_width:  # right
+                and char.x_cord + char.speed + char.width < win_width:
             char.x_cord += char.speed
         # Moves the player up if the "w" key is pressed.
         if keys_pressed[pygame.K_w] \
-                and char.y_cord - char.speed > 70:  # up
+                and char.y_cord - char.speed > 70:
             char.y_cord -= char.speed
         # Moves the player down if the "s" key is pressed.
         if keys_pressed[pygame.K_s] \
-                and char.y_cord + char.speed + char.height < win_height - 15:  # down
+                and char.y_cord + char.speed + char.height < win_height - 15:
             char.y_cord += char.speed
 
     # Moving each enemy by their speed each frame.
@@ -648,7 +650,7 @@ def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
             return bullet_list.remove(bullet)
 
 def collision_decttion(char_list, enemy_list, bullet_list):
-    """handles the collisions between players, bullets and enemies"""
+    """Handles the collisions between players, bullets and enemies."""
     for char in char_list:
         for enemy in enemy_list:
             # Detects if any character is inside any enemy.
@@ -724,6 +726,7 @@ if __name__ == "__main__":
     with open("Highscore.txt", "r", encoding="utf-8") as highscores:
         highscore_list = highscores.readlines()
 
+        # Fixing each highscore item so that the string doesn't have a '\n' on teh end of them.
         fixing_list = []
         for line in highscore_list:
             fixing_list.append(re.sub("\n", "", line))
