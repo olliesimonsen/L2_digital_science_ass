@@ -274,6 +274,7 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
         enemy_text = enemy.make_enemy_answer()
         button_text = enemy_text.render(str(enemy.value), True, WHITE)
         window.blit(button_text, (enemy.x_cord + 20, enemy.y_cord + enemy.height/2 - 30))
+        
 
     # Rendering all text items.
     for text in text_list:
@@ -386,6 +387,7 @@ def gameplay_main():
     gp_character.score = 0
     spawn_enemies = True
     paused = False
+    win = False
 
     gameplay_rect_list = [baseplate, gameplay_pause_menu, gameplay_header_rect]
 
@@ -445,9 +447,9 @@ def gameplay_main():
                     friend_bullet = Bullets(char.x_cord + char.width - 25, \
                                             char.y_cord + char.height/2, 30, 10, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
-
+            
             # Making player lose a life when nessercary.
-            if event.type == PLAYER_HIT and cooldown <= 0 or keys_pressed[pygame.K_BACKSLASH]:
+            if event.type == PLAYER_HIT and cooldown <= 0 or keys_pressed[pygame.K_BACKSLASH] and keys_pressed[pygame.K_SLASH]:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
                 # Stopping all processes when the player loses.
@@ -470,10 +472,12 @@ def gameplay_main():
         if paused:
             draw(pause_rect_list, pause_text_list, [], [], [])
         else:
+            if keys_pressed[pygame.K_DELETE] and keys_pressed[pygame.K_0] and keys_pressed[pygame.K_SLASH]:
+                win = True
             gameplay_movement(
                 gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
             collision_decttion(
-                gp_char_list, gp_enemy_list, gp_bullet_list)
+                gp_char_list, gp_enemy_list, gp_bullet_list, win, bullet_reload)
             draw(
                 gameplay_rect_list, gameplay_text_list, gp_char_list, gp_enemy_list, gp_bullet_list)
             time += 1
@@ -649,8 +653,14 @@ def gameplay_movement(char_list, enemy_list, keys_pressed, bullet_list):
         if bullet.x_cord > win_width:
             return bullet_list.remove(bullet)
 
-def collision_decttion(char_list, enemy_list, bullet_list):
+def collision_decttion(char_list, enemy_list, bullet_list, win, bullet_reload):
     """Handles the collisions between players, bullets and enemies."""
+    if win:
+        gp_character.score += 1
+        gameplay_score_text.char = "Score: " + str(gp_character.score)
+        bullet_reload = 0
+        return bullet_reload
+
     for char in char_list:
         for enemy in enemy_list:
             # Detects if any character is inside any enemy.
