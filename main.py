@@ -209,7 +209,7 @@ class Text:
 
 
 # All the text on the main menu represented as the 'Text' class.
-title_text = Text(450, 0, "", 100, WHITE, "Math Devout, Figuring It Out")
+title_text = Text(win_width/2 - 330, 0, "", 150, WHITE, "Stellar Solver")
 play_button_text = Text(win_width/2 - button_width/2 + 10, 230, "ariel", 50, BLACK, "Play Game")
 highscore_button_text = Text(
     win_width/2 - button_width/2 + 5, 380, "ariel", 50, BLACK, "Highscores")
@@ -274,7 +274,7 @@ def draw(rect_list, text_list, char_list, enemy_list, bullet_list):
         enemy_text = enemy.make_enemy_answer()
         button_text = enemy_text.render(str(enemy.value), True, WHITE)
         window.blit(button_text, (enemy.x_cord + 20, enemy.y_cord + enemy.height/2 - 30))
-        
+
 
     # Rendering all text items.
     for text in text_list:
@@ -447,9 +447,10 @@ def gameplay_main():
                     friend_bullet = Bullets(char.x_cord + char.width - 25, \
                                             char.y_cord + char.height/2, 30, 10, BLUE, 1, 20)
                     gp_bullet_list.append(friend_bullet)
-            
+
             # Making player lose a life when nessercary.
-            if event.type == PLAYER_HIT and cooldown <= 0 or keys_pressed[pygame.K_BACKSLASH] and keys_pressed[pygame.K_SLASH]:
+            if event.type == PLAYER_HIT and cooldown <= 0 \
+                or keys_pressed[pygame.K_BACKSLASH] and keys_pressed[pygame.K_SLASH]:
                 gp_character.lives = gp_character.lives - 1
                 gameplay_lives_text.char = "Lives: " + str(gp_character.lives)
                 # Stopping all processes when the player loses.
@@ -472,7 +473,8 @@ def gameplay_main():
         if paused:
             draw(pause_rect_list, pause_text_list, [], [], [])
         else:
-            if keys_pressed[pygame.K_DELETE] and keys_pressed[pygame.K_0] and keys_pressed[pygame.K_SLASH]:
+            if keys_pressed[pygame.K_DELETE] \
+                and keys_pressed[pygame.K_0] and keys_pressed[pygame.K_SLASH]:
                 win = True
             gameplay_movement(
                 gp_char_list, gp_enemy_list, keys_pressed, gp_bullet_list)
@@ -538,7 +540,6 @@ def run_highscore_input():
                         score_dict[item] = int(score)
                     # Sorting the scores from highest to lowest.
                     sorted_score_dict = sorted(score_dict.items(), key=lambda x:x[1], reverse=True)
-
                     highscore_list.clear()
 
                     # Adding the players score to the highscore database.
@@ -689,18 +690,18 @@ def collision_decttion(char_list, enemy_list, bullet_list, win, bullet_reload):
                             gp_character.score += 1
                             gameplay_score_text.char = "Score: " + str(gp_character.score)
 
-                        # If inncorrect answer is hit the player loses a life.
+                        # If inncorrect answer is hit then the player loses a life.
                         else:
                             pygame.event.post(pygame.event.Event(PLAYER_HIT))
                             enemy.x_cord = 0 - enemy.width
                             # Checking if the player is invunerable.
-                            already_inncorrect = False
+                            already_incorrect = False
                             for char in gameplay_question_text.char:
                                 if char == "I":
-                                    already_inncorrect = True
+                                    already_incorrect = True
                                     break
 
-                            if not already_inncorrect:
+                            if not already_incorrect:
                                 gameplay_question_text.char += " Incorrect"
                         return enemy_list.remove(enemy), bullet_list.clear()
 
@@ -736,7 +737,7 @@ if __name__ == "__main__":
     with open("Highscore.txt", "r", encoding="utf-8") as highscores:
         highscore_list = highscores.readlines()
 
-        # Fixing each highscore item so that the string doesn't have a '\n' on teh end of them.
+        # Fixing each highscore item so that the string doesn't have a '\n' on the end of them.
         fixing_list = []
         for line in highscore_list:
             fixing_list.append(re.sub("\n", "", line))
